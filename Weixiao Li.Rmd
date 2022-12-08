@@ -2,29 +2,284 @@
 title: "678 Final project"
 author: "Weixiao Li"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+   pdf_document:
+       latex_engine: xelatex
 ---
-
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+ echo = TRUE,
+ message = FALSE,
+ warning = FALSE
+)
+
 ```
 
-## R Markdown
+# Abstract
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+In the context of continuous economic development, people are more and more concerned about their physical health while pursuing material improvement, especially the topic of life expectancy, which has become the focus in recent years. However, life expectancy is influenced by many aspects, so it is well worth to take the analysis. I will compare the relationship between the variables and then select a model to fit data. After reading this report, you will have a comprehensive understanding of the factors that influence life expectancy.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# Introduction
 
-```{r cars}
-summary(cars)
+Life expectancy is a statistical measure of the average time an organism is expected to live. My project will focus on the relationship between life expectancy and other variables. For example, I will an analysis of which factors have a positive and which have a negative impact on increasing life expectancy, and find variables have the significant effect, so individual and government can pay more attention to improve that aspects. The project will consisting of following parts: Abstract, Introduction, Method, Result, Discussion, Appendix and Supplement.
+
+# Method
+
+The dataset comes from website Kaggle. There are nineteen variables included in the dataset originally. I will select several factors to represent the aspects of economic, social and culture to have a deeply analysis. Because the conditions of each country vary greatly, I will classify each country into five Ocontinent,and then group by ocontinent and developing status, so that we can more intuitive and clear to see the differences between regions and status in the subsequent classification.
+
+|    Column names    | Explanation                                                          |
+|:---------------------------------:|:------------------------------------|
+|       Group        | Grouped by continent and level of development                        |
+|   Literacy rate    | Literacy rate, adult total (% of people ages 15 and above)           |
+|      Homicid       | Homicidies per 100k people                                           |
+|    Electricity     | Electric power consumption (kWh per capita)                          |
+|       Status       | Economic development status of country                               |
+|    Wateraccess     | Access to improved water sources (% of total population with access) |
+|    Tuberculosis    | Incidence of tuberculosis (per 100,000 people)                       |
+|     Inflation      | Inflation, consumer prices (annual %)                                |
+| Healthexppercapita | Average health expenditure per capita                                |
+|     Schooling      | Number of years of Schooling (years)                                 |
+|      HIV.AIDS      | Deaths per 1 000 live births HIV/AIDS (0-4 years)                    |
+|   Fertilityrate    | Fertility rate, total (births per woman)                             |
+|      Lifeexp       | Life expectancy                                                      |
+|    Gdppercapita    | GDP per capita, PPP (current international \$)                       |
+|        CO2         | Average CO2 emissions (metric tons per capita)                       |
+|       Forest       | Forest area (% of land area)                                         |
+|      Urbanpop      | Urban population                                                     |
+|   Urbanpopgrowth   | Average urban population growth (annual %)                           |
+
+```{r echo=FALSE}
+library(rstanarm)
+library(arm)
+library(ggplot2)
+library(ggpubr)
+library(gridExtra)
+library(corrplot)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r echo=FALSE}
+lifeexp <- read.csv("C:/Users/16932/Desktop/lifeexpectancy1.csv")
+Ocontinent <- c("Africa","Asia","Asia","Asia","Europe","Europe","South America","Europe",
+                     "South America","Asia","South America","North America","Europe","Europe",
+                     "North America","South America","North America","Europe","North America","Europe","North America",
+                     "North America","Europe","Asia","Asia","Europe","North America","Asia","Asia","Africa","Europe","Asia",
+                     "Europe","Europe","Africa","South America","Asia","Africa","Asia","Asia","North America","Asia","Asia","North America","South America",
+                     "South America","Asia","Europe","Europe","Europe","Asia","Europe","Africa","Europe","Asia","Asia","South America",
+                     "South America","Asia","North America","South America","Africa")
+                    
+lifeexp$Ocontinent <- Ocontinent
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+# Exploratory Data Analysis
+
+```{r echo=FALSE,fig.height=3.6, fig.width=6}
+hist(lifeexp$lifeexp[lifeexp$Status=="Developing"], xlab = "Life expectancy", 
+     ylab = "frequency",col = "lightblue", border = "black", main = "Histogram")
+hist(lifeexp$lifeexp[lifeexp$Status=="Developed"], xlab = "Developed", 
+     ylab = "frequency",col = "blue", border = "black", main = "Histogram",add=T)
+hist(lifeexp$lifeexp[lifeexp$Status=="Leastdeveloped"], xlab = "Leastdeveloped", 
+     ylab = "frequency",col = "purple", border = "black", main = "Histogram", add = T)
+legend("topleft", c("Developed","Developing", "Leastdeveloped"), col=c("blue", "lightblue","purple"), lwd=10)
+```
+
+The plot shows the frequency distribution of life expectancy. As we can see that life expectancy varies a lot among different status countries. In developing countries is distributed across all ages, with life expectancy in developed countries at the higher end and life expectancy in countries that are lagging behind at the lower end. Thus, I decide to analyze what factors influence life expectancy in countries in different status of development.
+
+```{r}
+hist(lifeexp$lifeexp[lifeexp$Status=="Developing"], xlab = "Life expectancy", 
+     ylab = "frequency",col = "lightblue", border = "black", main = "Histogram")
+hist(lifeexp$lifeexp[lifeexp$Status=="Developed"], xlab = "Developed", 
+     ylab = "frequency",col = "blue", border = "black", main = "Histogram",add=T)
+hist(lifeexp$lifeexp[lifeexp$Status=="Leastdeveloped"], xlab = "Leastdeveloped", 
+     ylab = "frequency",col = "purple", border = "black", main = "Histogram", add = T)
+legend("topleft", c("Developed","Developing", "Leastdeveloped"), col=c("blue", "lightblue","purple"), lwd=10)
+```
+
+The plot shows the frequency distribution of life expectancy. As we can see that life expectancy varies a lot among different status countries. In developing countries is distributed across all ages, with life expectancy in developed countries at the higher end and life expectancy in countries that are lagging behind at the lower end. Thus, I decide to analyze what factors influence life expectancy in countries in different status of development.
+
+```{r echo=FALSE,fig.height=3.6, fig.width=6}
+p<-boxplot(lifeexp ~ Ocontinent, data = lifeexp, xlab = "Life Expectancy",
+           ylab = "Status", main = "Life Expectancy by Ocontinent" )
+```
+From the boxplot we can see that life expectancy varies a lot among ocontinents, thus I want to group by status and ocontinent and there will be ten groups
+
+```{r echo=FALSE}
+lifeexp$Group <- ifelse(lifeexp$Status=="Developed"&lifeexp$Ocontinent=="Asia","Asia_Developed",
+                        ifelse(lifeexp$Status=="Developing"&lifeexp$Ocontinent=="Asia","Asia_Developing",
+                               ifelse(lifeexp$Status=="Developed"&lifeexp$Ocontinent=="Europe","Europe_Developed",
+                                      ifelse(lifeexp$Status=="Developing"&lifeexp$Ocontinent=="Europe","Europe_Developing",
+                                             ifelse(lifeexp$Status=="Developed"&lifeexp$Ocontinent=="North America","NorthAmerica_Developed",
+                                                    ifelse(lifeexp$Status=="Developing"&lifeexp$Ocontinent=="North America","NorthAmerica_Developing",
+                                                           ifelse(lifeexp$Status=="Leastdeveloped"&lifeexp$Ocontinent=="Asia","Asia_Leastdeveloped",
+                                                                  ifelse(lifeexp$Status=="Developing"&lifeexp$Ocontinent=="South America","SouthAmerica_Developing",
+                                                                         ifelse(lifeexp$Status=="Leastdeveloped"&lifeexp$Ocontinent=="Africa","Africa_Leastdeveloped",
+                                                                                ifelse(lifeexp$Status=="Developing"&lifeexp$Ocontinent=="Africa","Africa_Developing",0))))))))))
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = log(healthexppercapita), y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')  
+```
+
+```{r echo=FALSE}
+ggplot(data = lifeexp) + 
+  aes(x = inflation , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = Schooling , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = tuberculosis , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = wateraccess , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+The plot illustrats the relationship between electricity and life expectancy in group level. Most groups are in positive trend while Africa_deveoping in a negative trend. Moreover, the plot of electricity and healthexppercapita are very similar, thus I want to make a plot of their relationship.
+
+```{r}
+
+
+```
+
+```{r}
+
+```
+
+
+```{r echo=FALSE}
+ggplot(data = lifeexp) + 
+  aes(x =gdppercapita, y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = homicid , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = tuberculosis , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = CO2 , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = urbanpop , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = fertilityrate , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
+
+# Model Fitting
+
+```{r}
+data1 <- data.frame(lifeexp[,c("fertilityrate","urbanpop","CO2","tuberculosis","gdppercapita","healthexppercapita","Schooling","inflation")])
+ggpairs(data1,progress = F)+theme_bw()
+```
+
+#delete urbanpop,co2
+```{r}
+f1 <- lmer(lifeexp~fertilityrate+CO2+log(healthexppercapita)+inflation+log(gdppercapita)+(1+fertilityrate+CO2+log(healthexppercapita)+inflation+log(gdppercapita)|Group),data=lifeexp)
+summary(f1)
+```
+
+```{r}
+plotFEsim(FEsim(f1))
+```
+
+
+# Appendix
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = log(electricity), y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = internet , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = wateraccess , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = CO2 , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = forest , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = urbanpopgrowth , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
+```{r}
+ggplot(data = lifeexp) + 
+  aes(x = literacyrate , y = lifeexp)+ 
+  geom_point(aes(color = factor(Group)), size = .6) + 
+  geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
+```
+
