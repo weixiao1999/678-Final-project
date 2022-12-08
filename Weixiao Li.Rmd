@@ -55,6 +55,8 @@ library(ggplot2)
 library(ggpubr)
 library(gridExtra)
 library(corrplot)
+library(merTools)
+libraryy(lattice)
 ```
 
 
@@ -224,13 +226,20 @@ ggpairs(data1,progress = F)+theme_bw()
 
 #delete urbanpop,co2
 ```{r}
-f1 <- lmer(lifeexp~fertilityrate+CO2+log(healthexppercapita)+inflation+log(gdppercapita)+(1+fertilityrate+CO2+log(healthexppercapita)+inflation+log(gdppercapita)|Group),data=lifeexp)
+f1 <- lmer(lifeexp~fertilityrate+log(healthexppercapita)+inflation+log(gdppercapita)+urbanpop+(1+fertilityrate+log(healthexppercapita)+inflation+log(gdppercapita)+urbanpop|Group),data=lifeexp)
 summary(f1)
 ```
 
 ```{r}
 plotFEsim(FEsim(f1))
 ```
+
+```{r}
+r <- plot(f1)
+q <- qqmath(f1)
+grid.arrange(r, q, ncol = 2)
+```
+
 
 
 # Appendix
