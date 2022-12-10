@@ -18,15 +18,15 @@ knitr::opts_chunk$set(
 
 # Abstract
 
-In the context of continuous economic development, people are more and more concerned about their physical health while pursuing material improvement, especially the topic of life expectancy, which has become the focus in recent years. However, life expectancy is influenced by many aspects, so it is well worth taking the analysis. I will compare the relationship between the variables and then select a model to fit data. After reading this report, you will have a comprehensive understanding of the factors that influence life expectancy.
+In the context of continuous economic development, people are more and more concerned about their physical health while pursuing material improvement, especially the topic of life expectancy, which has become the focus in recent years. I will first group the variables and then examine the factors that affect life expectancy. I choose to use Multilevel Regression model to fit data. After reading this report, you will have a comprehensive understanding of the factors that influence life expectancy.
 
 # Introduction
 
-Life expectancy is a statistical measure of the average time an organism is expected to live. My project will focus on the relationship between life expectancy and other variables. For example, I will an analysis of which factors have a positive and which have a negative impact on increasing life expectancy and find variables that have a significant effect, so individuals and governments can pay more attention to improving that aspects. The project will consist of the following parts: Abstract, Introduction, Method, Result, Discussion, Appendix, and Supplement.
+Life expectancy is a statistical measure of the average time an organism is expected to live. My project will focus on the relationship between life expectancy and other factors. For example, I will an analysis of which factors have a positive and which have a negative impact on increasing life expectancy and find variables that have a significant effect, so individuals and governments can pay more attention to improving that aspects. The project will consist of the following parts: Abstract, Introduction, Method, Result, Discussion, Appendix, and Supplement.
 
 # Method
 
-The dataset comes from the website Kaggle. There are nineteen variables included in the dataset originally. I will select several factors to represent the aspects of economic, social, and culture to have a deep analysis. Because the conditions of each country vary greatly, I will classify each country into five Ocontinent,and then group by ocontinent and developing status, so that we can more intuitively and clearly see the differences between regions and status in the subsequent classification. Because Healthexppercapita, Electricity and Gdppercapita are very large, so I take a log of these items in the following analysis.
+The dataset comes from the website Kaggle. There are nineteen variables included in the dataset originally. I will select several factors to represent the aspects of economic, social, and culture to have a deep analysis. Because the conditions of each country vary greatly, I will classify each country into five continents,and then group by continents and developing status, so that we can more intuitively and clearly see the differences between regions and status in the subsequent classification. Because Healthexppercapita, Electricity and Gdppercapita are very large, so I take a log of these items in the following analysis.
 
 |    Column names    | Explanation                                                          |
 |:---------------------------------:|:------------------------------------|
@@ -77,7 +77,7 @@ lifeexp$Ocontinent <- Ocontinent
 # Exploratory Data Analysis
 
 ## Grouping
-```{r echo=FALSE,fig.height=3.6, fig.width=6}
+```{r echo=FALSE}
 hist(lifeexp$lifeexp[lifeexp$Status=="Developing"], xlab = "Life expectancy", 
      ylab = "frequency",col = "lightblue", border = "black", main = "Histogram")
 hist(lifeexp$lifeexp[lifeexp$Status=="Developed"], xlab = "Developed", 
@@ -86,13 +86,14 @@ hist(lifeexp$lifeexp[lifeexp$Status=="Leastdeveloped"], xlab = "Leastdeveloped",
      ylab = "frequency",col = "purple", border = "black", main = "Histogram", add = T)
 legend("topleft", c("Developed","Developing", "Leastdeveloped"), col=c("blue", "lightblue","purple"), lwd=10)
 ```
-The plot shows the frequency distribution of life expectancy. As we can see that life expectancy varies a lot among different status countries. In developing countries is distributed across all ages, with life expectancy in developed countries at the higher end and life expectancy in countries that are lagging behind at the lower end. Thus, I decide to analyze what factors influence life expectancy in countries in different status of development.
+The plot shows the frequency distribution of life expectancy. As we can see that life expectancy varies a lot among different status countries. In developing countries is distributed across all ages, with life expectancy in developed countries at the higher end and life expectancy in countries that are lagging behind at the lower end. Thus, I decide to analyze what factors influence life expectancy in countries that in different status of development.
 
-```{r echo=FALSE,fig.height=3.6, fig.width=6}
+```{r echo=FALSE,fig.height=3.6, fig.width=8}
 p<-boxplot(lifeexp ~ Ocontinent, data = lifeexp, xlab = "Life Expectancy",
            ylab = "Status", main = "Life Expectancy by Ocontinent" )
 ```
-From the boxplot we can see that life expectancy varies a lot among ocontinents, thus I want to group by status and ocontinent and there will be ten groups
+
+From the boxplot we can see that life expectancy varies a lot among continents, thus I want to group by status and continent and there will be ten groups.
 
 ```{r echo=FALSE}
 lifeexp$Group <- ifelse(lifeexp$Status=="Developed"&lifeexp$Ocontinent=="Asia","Asia_Developed",
@@ -110,7 +111,7 @@ lifeexp$Group <- ifelse(lifeexp$Status=="Developed"&lifeexp$Ocontinent=="Asia","
 ## Selection of variables
 
 ### a
-```{r echo=FALSE,fig.height=3.6, fig.width=6}
+```{r echo=FALSE,fig.height=3, fig.width=8}
 g1 <- ggplot(data = lifeexp) + 
   aes(x = log(healthexppercapita), y = lifeexp)+ 
   geom_point(aes(color = factor(Group)), size = .6) + 
@@ -122,10 +123,10 @@ g2 <- ggplot(data = lifeexp) +
   geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
 grid.arrange(g1, g2, ncol = 2)
 ```
-The left plot shows the relationship between life expectancy and health expenditure per capital. We can see that the two variables are in a positive related while in least developed Asia countries are negatve. And the right plot illustrates that as inflation rises, person's life expectancy goes down in most groups. Thus, I will keep these two variables in modle to have a deep analysis.
+The left plot shows the relationship between life expectancy and health expenditure per capital. We can see that the two variables are in a positive related while in least developed Asia countries are negative. And the right plot illustrates that as inflation rises, person's life expectancy goes down in most groups. The trend remains consistent across the groups. Thus, I will keep these two variables in model to have a deep analysis.
 
 ### b
-```{r echo=FALSE,fig.height=3.6, fig.width=6}
+```{r echo=FALSE,fig.height=3, fig.width=8}
 g3 <- ggplot(data = lifeexp) + 
   aes(x = Schooling , y = lifeexp)+ 
   geom_point(aes(color = factor(Group)), size = .6) + 
@@ -136,11 +137,10 @@ g4 <- ggplot(data = lifeexp) +
   geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x')
 grid.arrange(g3, g4, ncol = 2)
 ```
-
-From the plot we can see that Schooling and log(gdppercapita) are in a positive relationship with life expectancy, even though GDP per capita in developing Africa is negatively correlate. Therefore, I will select the two item in the following analysis.
+From the plot we can see that Schooling and log(gdppercapita) are in a positive relationship with life expectancy, even though GDP per capita in developing Africa is negatively correlate. The difference in each group is not big,therefore, I will remain the two items in the following analysis.
 
 ### c
-```{r echo=FALSE,fig.height=3.6, fig.width=6}
+```{r echo=FALSE,fig.height=3, fig.width=8}
 g5 <- ggplot(data = lifeexp) + 
   aes(x = tuberculosis , y = lifeexp)+ 
   geom_point(aes(color = factor(Group)), size = .6) + 
@@ -151,10 +151,10 @@ g6 <- ggplot(data = lifeexp) +
   geom_smooth(aes(color = factor(Group)), method = "lm", se = FALSE, formula = 'y ~ x') 
 grid.arrange(g5, g6, ncol = 2)
 ```
-These two plots present that lower fertility rate and Incidence of tuberculosis in every group contribute to higher person's life expectancy, this trend is consistent across groups.
+These two plots present that lower fertility rate and lower Incidence of tuberculosis in every group contribute to higher person's life expectancy, this trend is consistent across groups.
 
 ### d
-```{r echo=FALSE,fig.height=3.6, fig.width=6}
+```{r echo=FALSE,fig.height=3, fig.width=8}
 g7 <- ggplot(data = lifeexp) + 
   aes(x = homicid , y = lifeexp)+ 
   geom_point(aes(color = factor(Group)), size = .6) + 
@@ -170,14 +170,14 @@ These plot illustrate that homicidies in a negative relationship with life expec
 
 # Model Fitting
 
-Because the selecting of variables is important for the analysis process,I want to further screen the variables that are put into the model. Therefore, I tested the correlation between variables and the two variables that are highly correlated are substitutable for each other. So, the correlation plot will help me to streamline the variables improve the model accuracy
+Because the selecting of variables is important for the model fitting,I want to further screen the variables that are put into the model. Therefore, I tested the correlation between variables and the two variables that are highly correlated are substitutable for each other. So, the correlation plot will help me to streamline the variables improve the model accuracy
 
 ```{r echo=FALSE,fig.height=3.6, fig.width=6}
 data1 <- data.frame(lifeexp[,c("fertilityrate","urbanpop","CO2","tuberculosis","gdppercapita","healthexppercapita","Schooling","inflation")])
 ggpairs(data1,progress = F)+theme_bw()
 ```
 
-Let's look at the correlation plot. The correlation coefficients of the majority of variables are below 0.5, indicating that they are not highly correlated and can be put into the model at the same time. However, the correlation between schooling and healthexppercapita are very high, over 0.7.Because I am more interested in expenditure, so I will keep the variable per capita health consumption expenditure in the model.Moreover, the coefficients of tuberculosis and fertility rate are relatively higher, thus I will choose fertility rate to analysis for it is a common perception that the incidence of disease is negatively correlated with population life expectancy. Therefore, I prefer to study the unclear relationship of fertility rate and life expectancy. Therefore, I keep Fertility rate. log(healthexppercaptia), inflation, and log(gdppercapita) four economically as well as socially relevant variables for the study.
+Let's look at the correlation plot. The correlation coefficients of the majority of variables are below 0.5, indicating that they are not highly correlated and can be put into the model at the same time. However, the correlation between schooling and healthexppercapita are very high, over 0.7.Because I am more interested in expenditure, so I will keep the variable health consumption expenditure per capita in the model.Moreover, the coefficients of tuberculosis and fertility rate are relatively higher, thus I will choose fertility rate to analysis for it is a common perception that the incidence of disease is negatively correlated with population life expectancy. So I prefer to study the unclear relationship of fertility rate and life expectancy. In the end, I keep Fertility rate. log(healthexppercaptia), inflation, and log(gdppercapita) four economically as well as socially relevant variables for the study.
 
 Here is the output of model:
 
@@ -191,34 +191,39 @@ plotFEsim(FEsim(f1))
 ```
 
 # Result
-
-```{r echo=FALSE}
-round(ranef(f1)$Group, digits = 2)
-```
-For the fixed effects: lifeexp\~54.71-1.93*(fertilityrate+1) + 2.62*log(healthexppercapita+1)+0.065*(inflation+1)+0.78*(log(gdppercapita)) Because my country is Asian Developing Country, so I choose the group of Asia_developing as an example to analysis. The fixed effects added random effects: lifeexp\~60.49-1.27*(fertilityrate+1) + 3.17*log(healthexppercapita+1)-0.365*(inflation+1)-0.27*(log(gdppercapita))
+For the fixed effects: lifeexp~54.71-1.93*(fertilityrate+1) + 2.62*log(healthexppercapita+1)+0.065*(inflation+1)+
+0.78*(log(gdppercapita)). I choose Asia_developing, Europe developed and Africa Leastdeveloped groups as an example to interpret.Random effects you can see in the Appendix. 
+The fixed effects added random effects. 
+For Asia developing coubtries:lifeexp~60.49-1.27*(fertilityrate+1) + 3.17*log(healthexppercapita+1)-0.365*(inflation+1)-
+0.27*(log(gdppercapita))
+For Europe developed countries:lifeexp~46.67-3.66*(fertilityrate+1) + 6.4*log(healthexppercapita+1)+1.375*(inflation+1)-1.02*(log(gdppercapita))
+For Africa Leastdeveloped countries:lifeexp~52,28-0.5*(fertilityrate+1) + 3.98*log(healthexppercapita+1)+
+0.745*(inflation+1)+0.2*(log(gdppercapita))
 
 ## Interpretation
 
-For Asia developing countries, we can conclude that fertility rate, inflation and gdp per capital have negative relationship with life expectancy. For fertility rate and inflation rise 1 point with others fixed, the life expectancy will decrease 1.27 years and 0.365 years respectively, and for gdp per capital increase 1%, the life expectancy will decrease 0.27 years on average. Healthy expenditure per capital have a positive relationship with life expectancy, every one percent increase in healthexppercapita, life expectancy will increase 3.17 years on average.
+For Asia developing countries, we can conclude that fertility rate, inflation and gdp per capital have negative relationship with life expectancy. For fertility rate and inflation rise 1 point with others fixed, the life expectancy will decrease 1.27 years and 0.365 years respectively, and for gdp per capital increase 1%, the life expectancy will decrease 0.27 years on average. Healthy expenditure per capital have a positive relationship with life expectancy, every one percent increase in healthexppercapita, life expectancy will increase 3.17 years on average. And for Europe developed countries, the coefficient of fertility rate, healthy expenditure per capital, gdp per capital and inflation are all larger, which means that the effect of these variables on life expectancy is greater in Europe developed regions than in Asia developing regions. And the intercept is smaller. Similarly, We can conclude that the effect of inflation and gdp per capital is least in Africa Leastdeveloped countries, and Healthy expenditure per capital has the greatest impact on the African region compared to the other two regions.
+
 
 ## Model Checking
 
 ```{r echo=FALSE}
 r <- plot(f1)
-q <- qqmath(f1)
-grid.arrange(r, q, ncol = 2)
 ```
-The left plot is residual plot and the right plot is Q-Q plot. From the residual plot we can see that most points depicted are randomly scattered above and below the line with 0 as the horizontal axis,in the range of[-2,2], while several points that deviate more from the zero value. The Q-Q plot illustrates that most plots are on the normal distribution line,so the error follows a normal distribution.
+From the residual plot we can see that most points depicted are randomly scattered above and below the line with 0 as the horizontal axis,in the range of[-2,2], while several points that deviate more from the zero value.
 
 # Discussion
 
 Using multivariate linear model allows me to see the relationship between each variable and life expectancy under different group categories. And which variables such as per capita health consumption expenditure, remaining positively correlated with life expectancy in each group, as well as some variables that have different relationships with life expectancy in different group, for example, inflation is negatively correlated with life expectancy in developing countries in each region and positively correlated in other development status.
 
-However, there are some shortcomings, the limited selection of variables and the fact that some groups contain fewer countries , which can cause a large error. As well as there are several variables with low linear correlation.So in the next steps, I can add some variables that can represent each convenient aspect, such as cultural, social, economic, etc. Nowadays, the variables in the model are more related to the economy.
+However, there are some shortcomings, the limited selection of variables and the fact that some groups contain fewer countries , which can cause a large error. As well as there are several variables with low linear correlation.So in the next steps, I will add some variables that can represent each convenient aspect, such as cultural, social, economic. The variables I put in the model are more related to the economy now.
 
 # Appendix
+```{r echo=FALSE}
+round(ranef(f1)$Group, digits = 2)
+```
 
-```{r echo=FALSE,fig.height=3.6, fig.width=6}
+```{r echo=FALSE,fig.height=3, fig.width=8}
 a1 <- ggplot(data = lifeexp) + 
   aes(x = log(electricity), y = lifeexp)+ 
   geom_point(aes(color = factor(Group)), size = .6) + 
@@ -232,7 +237,7 @@ grid.arrange(a1, a2, ncol = 2)
 
 ```
 
-```{r}
+```{r echo=FALSE,fig.height=3, fig.width=8}
 a3 <- ggplot(data = lifeexp) + 
   aes(x = wateraccess , y = lifeexp)+ 
   geom_point(aes(color = factor(Group)), size = .6) + 
@@ -246,7 +251,7 @@ grid.arrange(a3, a4, ncol = 2)
 
 ```
 
-```{r}
+```{r echo=FALSE,fig.height=3, fig.width=8}
 a5 <- ggplot(data = lifeexp) + 
   aes(x = forest , y = lifeexp)+ 
   geom_point(aes(color = factor(Group)), size = .6) + 
@@ -260,7 +265,7 @@ grid.arrange(a5, a6, ncol = 2)
 
 ```
 
-```{r}
+```{r echo=FALSE,fig.height=3, fig.width=8}
 ggplot(data = lifeexp) + 
   aes(x = literacyrate , y = lifeexp)+ 
   geom_point(aes(color = factor(Group)), size = .6) + 
